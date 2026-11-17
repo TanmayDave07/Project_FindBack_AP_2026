@@ -113,4 +113,4 @@ No non-key attribute determines another non-key attribute in any of the 8 tables
 | `Verification` | `id` | `id → all` | ✔ |
 | `Handover` | `id`, `claimId` | `id → all`, `claimId → all` | ✔ |
 
-Every determinant in every table is a candidate key. Therefore, **all 8 tables are strictly in BCNF**.
+Every determinant in every table is a candidate key. Therefore, **all 8 tables are strictly in BCNF** .

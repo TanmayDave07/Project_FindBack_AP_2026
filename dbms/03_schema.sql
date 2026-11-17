@@ -169,4 +169,4 @@ CREATE INDEX "Match_foundReportId_idx" ON "Match"("foundReportId");
 CREATE INDEX "Claim_foundReportId_status_idx" ON "Claim"("foundReportId", "status");
 CREATE INDEX "Claim_userId_idx" ON "Claim"("userId");
 
-CREATE INDEX "Verification_claimId_idx" ON "Verification"("claimId");
+CREATE INDEX "Verification_claimId_idx" ON "Verification"("claimId") ;
