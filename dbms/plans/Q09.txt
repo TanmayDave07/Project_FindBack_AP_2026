@@ -1,0 +1,67 @@
+-- Q09: Get full details of a single item report along with claim count
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    ir.*,
+    u."name" AS "reporterName",
+    u."email" AS "reporterEmail",
+    c."name" AS "categoryName",
+    l."name" AS "locationName",
+    l."description" AS "locationDescription",
+    COUNT(cl."id") AS "totalClaims"
+FROM "ItemReport" ir
+JOIN "User" u ON u."id" = ir."userId"
+JOIN "Category" c ON c."id" = ir."categoryId"
+JOIN "Location" l ON l."id" = ir."locationId"
+LEFT JOIN "Claim" cl ON cl."foundReportId" = ir."id"
+WHERE ir."id" = 'r2'
+GROUP BY ir."id", u."id", c."id", l."id";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+GroupAggregate  (cost=14.02..14.05 rows=1 width=220) (actual time=0.086..0.088 rows=1 loops=1)
+  Group Key: u.id, c.id, l.id
+  Buffers: shared hit=9
+  ->  Sort  (cost=14.02..14.03 rows=1 width=216) (actual time=0.081..0.083 rows=1 loops=1)
+        Sort Key: u.id, c.id, l.id
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=9
+        ->  Hash Join  (cost=12.59..14.01 rows=1 width=216) (actual time=0.061..0.066 rows=1 loops=1)
+              Hash Cond: (u.id = ir."userId")
+              Buffers: shared hit=6
+              ->  Seq Scan on "User" u  (cost=0.00..1.30 rows=30 width=24) (actual time=0.003..0.004 rows=30 loops=1)
+                    Buffers: shared hit=1
+              ->  Hash  (cost=12.58..12.58 rows=1 width=192) (actual time=0.048..0.050 rows=1 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=5
+                    ->  Hash Join  (cost=11.40..12.58 rows=1 width=192) (actual time=0.045..0.047 rows=1 loops=1)
+                          Hash Cond: (c.id = ir."categoryId")
+                          Buffers: shared hit=5
+                          ->  Seq Scan on "Category" c  (cost=0.00..1.12 rows=12 width=9) (actual time=0.001..0.001 rows=12 loops=1)
+                                Buffers: shared hit=1
+                          ->  Hash  (cost=11.39..11.39 rows=1 width=183) (actual time=0.036..0.037 rows=1 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=4
+                                ->  Nested Loop Left Join  (cost=8.18..11.39 rows=1 width=183) (actual time=0.029..0.034 rows=1 loops=1)
+                                      Buffers: shared hit=4
+                                      ->  Hash Join  (cost=8.18..9.38 rows=1 width=179) (actual time=0.024..0.027 rows=1 loops=1)
+                                            Hash Cond: (l.id = ir."locationId")
+                                            Buffers: shared hit=3
+                                            ->  Seq Scan on "Location" l  (cost=0.00..1.15 rows=15 width=24) (actual time=0.001..0.002 rows=15 loops=1)
+                                                  Buffers: shared hit=1
+                                            ->  Hash  (cost=8.17..8.17 rows=1 width=155) (actual time=0.013..0.013 rows=1 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                  Buffers: shared hit=2
+                                                  ->  Index Scan using "ItemReport_pkey" on "ItemReport" ir  (cost=0.15..8.17 rows=1 width=155) (actual time=0.007..0.007 rows=1 loops=1)
+                                                        Index Cond: (id = 'r2'::text)
+                                                        Buffers: shared hit=2
+                                      ->  Seq Scan on "Claim" cl  (cost=0.00..2.00 rows=1 width=8) (actual time=0.003..0.006 rows=1 loops=1)
+                                            Filter: ("foundReportId" = 'r2'::text)
+                                            Rows Removed by Filter: 79
+                                            Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=403
+Planning Time: 0.843 ms
+Execution Time: 0.189 ms

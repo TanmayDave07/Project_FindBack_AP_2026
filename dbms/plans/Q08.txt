@@ -1,0 +1,63 @@
+-- Q08: Search and filter item reports by type, category, location, date range, and keyword
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    ir."id",
+    ir."type",
+    ir."title",
+    ir."description",
+    ir."color",
+    ir."eventDate",
+    ir."status",
+    c."name" AS "categoryName",
+    l."name" AS "locationName",
+    u."name" AS "reporterName"
+FROM "ItemReport" ir
+JOIN "Category" c ON c."id" = ir."categoryId"
+JOIN "Location" l ON l."id" = ir."locationId"
+JOIN "User" u ON u."id" = ir."userId"
+WHERE ir."type" = 'LOST'
+  AND ir."status" IN ('ACTIVE', 'MATCHED')
+  AND ir."categoryId" = 'c4'
+  AND ir."locationId" = 'l9'
+  AND ir."eventDate" >= '2026-11-01 00:00:00'
+  AND (ir."title" ILIKE '%charger%' OR ir."description" ILIKE '%charger%')
+ORDER BY ir."eventDate" DESC;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Sort  (cost=19.66..19.67 rows=1 width=88) (actual time=0.084..0.085 rows=0 loops=1)
+  Sort Key: ir."eventDate" DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=15
+  ->  Nested Loop  (cost=15.87..19.65 rows=1 width=88) (actual time=0.070..0.072 rows=0 loops=1)
+        Buffers: shared hit=12
+        ->  Nested Loop  (cost=15.87..18.46 rows=1 width=84) (actual time=0.070..0.071 rows=0 loops=1)
+              Buffers: shared hit=12
+              ->  Hash Join  (cost=15.87..17.30 rows=1 width=81) (actual time=0.070..0.071 rows=0 loops=1)
+                    Hash Cond: (u.id = ir."userId")
+                    Buffers: shared hit=12
+                    ->  Seq Scan on "User" u  (cost=0.00..1.30 rows=30 width=10) (actual time=0.002..0.003 rows=1 loops=1)
+                          Buffers: shared hit=1
+                    ->  Hash  (cost=15.86..15.86 rows=1 width=77) (actual time=0.059..0.060 rows=0 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                          Buffers: shared hit=11
+                          ->  Bitmap Heap Scan on "ItemReport" ir  (cost=4.34..15.86 rows=1 width=77) (actual time=0.059..0.059 rows=0 loops=1)
+                                Recheck Cond: (("categoryId" = 'c4'::text) AND (type = 'LOST'::"ItemType"))
+                                Filter: ((status = ANY ('{ACTIVE,MATCHED}'::"ReportStatus"[])) AND ("eventDate" >= '2026-11-01 00:00:00'::timestamp without time zone) AND ("locationId" = 'l9'::text) AND ((title ~~* '%charger%'::text) OR (description ~~* '%charger%'::text)))
+                                Rows Removed by Filter: 34
+                                Heap Blocks: exact=10
+                                Buffers: shared hit=11
+                                ->  Bitmap Index Scan on "ItemReport_categoryId_type_idx"  (cost=0.00..4.34 rows=19 width=0) (actual time=0.012..0.012 rows=34 loops=1)
+                                      Index Cond: (("categoryId" = 'c4'::text) AND (type = 'LOST'::"ItemType"))
+                                      Buffers: shared hit=1
+              ->  Seq Scan on "Category" c  (cost=0.00..1.15 rows=1 width=9) (never executed)
+                    Filter: (id = 'c4'::text)
+        ->  Seq Scan on "Location" l  (cost=0.00..1.19 rows=1 width=10) (never executed)
+              Filter: (id = 'l9'::text)
+Planning:
+  Buffers: shared hit=461
+Planning Time: 0.835 ms
+Execution Time: 0.140 ms

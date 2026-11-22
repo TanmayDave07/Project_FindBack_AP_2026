@@ -1,0 +1,18 @@
+-- Q01: Register a new campus user (Student or Admin)
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+INSERT INTO "User" ("name", "email", "passwordHash", "role")
+VALUES ('Yashraj Panghal', 'yashraj@nst.edu', '$2b$10$hashedpasswordexample', 'STUDENT')
+RETURNING "id", "name", "email", "role", "emailVerified", "createdAt";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Insert on "User"  (cost=0.00..0.03 rows=1 width=149) (actual time=0.107..0.107 rows=1 loops=1)
+  Buffers: shared hit=48
+  ->  Result  (cost=0.00..0.03 rows=1 width=149) (actual time=0.019..0.019 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=25
+Planning Time: 0.081 ms
+Execution Time: 0.141 ms

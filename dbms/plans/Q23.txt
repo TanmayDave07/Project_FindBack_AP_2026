@@ -1,0 +1,74 @@
+-- Q23: Retrieve full handover audit trail (item, claim, finder, and receiver details)
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    h."id" AS "handoverId",
+    h."handedOverAt",
+    h."notes",
+    cl."id" AS "claimId",
+    ir."id" AS "reportId",
+    ir."title" AS "itemTitle",
+    c."name" AS "categoryName",
+    l."name" AS "locationName",
+    sender."name" AS "handedOverByName",
+    sender."email" AS "handedOverByEmail",
+    receiver."name" AS "receivedByName",
+    receiver."email" AS "receivedByEmail"
+FROM "Handover" h
+JOIN "Claim" cl ON cl."id" = h."claimId"
+JOIN "ItemReport" ir ON ir."id" = cl."foundReportId"
+JOIN "Category" c ON c."id" = ir."categoryId"
+JOIN "Location" l ON l."id" = ir."locationId"
+JOIN "User" sender ON sender."id" = h."handedOverById"
+JOIN "User" receiver ON receiver."id" = h."receivedById"
+WHERE h."claimId" = 'cl1';
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Nested Loop  (cost=3.14..14.73 rows=1 width=99) (actual time=0.053..0.060 rows=1 loops=1)
+  Buffers: shared hit=10
+  ->  Nested Loop  (cost=3.01..14.55 rows=1 width=95) (actual time=0.048..0.055 rows=1 loops=1)
+        Buffers: shared hit=8
+        ->  Nested Loop  (cost=2.87..14.36 rows=1 width=92) (actual time=0.045..0.052 rows=1 loops=1)
+              Buffers: shared hit=6
+              ->  Nested Loop  (cost=2.73..6.16 rows=1 width=70) (actual time=0.041..0.047 rows=1 loops=1)
+                    Buffers: shared hit=4
+                    ->  Hash Join  (cost=2.73..4.15 rows=1 width=66) (actual time=0.038..0.042 rows=1 loops=1)
+                          Hash Cond: (receiver.id = h."receivedById")
+                          Buffers: shared hit=3
+                          ->  Seq Scan on "User" receiver  (cost=0.00..1.30 rows=30 width=24) (actual time=0.004..0.005 rows=30 loops=1)
+                                Buffers: shared hit=1
+                          ->  Hash  (cost=2.71..2.71 rows=1 width=48) (actual time=0.024..0.025 rows=1 loops=1)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=2
+                                ->  Hash Join  (cost=1.32..2.71 rows=1 width=48) (actual time=0.020..0.023 rows=1 loops=1)
+                                      Hash Cond: (sender.id = h."handedOverById")
+                                      Buffers: shared hit=2
+                                      ->  Seq Scan on "User" sender  (cost=0.00..1.30 rows=30 width=24) (actual time=0.001..0.002 rows=30 loops=1)
+                                            Buffers: shared hit=1
+                                      ->  Hash  (cost=1.31..1.31 rows=1 width=30) (actual time=0.010..0.011 rows=1 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                            Buffers: shared hit=1
+                                            ->  Seq Scan on "Handover" h  (cost=0.00..1.31 rows=1 width=30) (actual time=0.005..0.006 rows=1 loops=1)
+                                                  Filter: ("claimId" = 'cl1'::text)
+                                                  Rows Removed by Filter: 24
+                                                  Buffers: shared hit=1
+                    ->  Seq Scan on "Claim" cl  (cost=0.00..2.00 rows=1 width=8) (actual time=0.002..0.004 rows=1 loops=1)
+                          Filter: (id = 'cl1'::text)
+                          Rows Removed by Filter: 79
+                          Buffers: shared hit=1
+              ->  Index Scan using "ItemReport_pkey" on "ItemReport" ir  (cost=0.15..8.17 rows=1 width=26) (actual time=0.004..0.004 rows=1 loops=1)
+                    Index Cond: (id = cl."foundReportId")
+                    Buffers: shared hit=2
+        ->  Index Scan using "Category_pkey" on "Category" c  (cost=0.14..0.18 rows=1 width=9) (actual time=0.002..0.002 rows=1 loops=1)
+              Index Cond: (id = ir."categoryId")
+              Buffers: shared hit=2
+  ->  Index Scan using "Location_pkey" on "Location" l  (cost=0.14..0.18 rows=1 width=10) (actual time=0.004..0.004 rows=1 loops=1)
+        Index Cond: (id = ir."locationId")
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=512
+Planning Time: 1.070 ms
+Execution Time: 0.139 ms

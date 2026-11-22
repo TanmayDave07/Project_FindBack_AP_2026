@@ -1,0 +1,19 @@
+-- Q02: Fetch user credentials and profile by email for login
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT "id", "name", "email", "passwordHash", "role", "emailVerified"
+FROM "User"
+WHERE "email" = 'yashraj@nst.edu';
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Seq Scan on "User"  (cost=0.00..1.38 rows=1 width=42) (actual time=0.009..0.009 rows=0 loops=1)
+  Filter: (email = 'yashraj@nst.edu'::text)
+  Rows Removed by Filter: 30
+  Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=92
+Planning Time: 0.232 ms
+Execution Time: 0.037 ms

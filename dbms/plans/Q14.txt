@@ -1,0 +1,55 @@
+-- Q14: Get ranked matches for a specific LOST report with full FOUND item details
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    m."id" AS "matchId",
+    m."score",
+    m."status" AS "matchStatus",
+    m."createdAt" AS "matchedAt",
+    fr."id" AS "foundReportId",
+    fr."title" AS "foundTitle",
+    fr."description" AS "foundDescription",
+    fr."color" AS "foundColor",
+    fr."eventDate" AS "foundDate",
+    fr."imageUrl" AS "foundImageUrl",
+    l."name" AS "foundLocation",
+    u."name" AS "finderName"
+FROM "Match" m
+JOIN "ItemReport" fr ON fr."id" = m."foundReportId"
+JOIN "Location" l ON l."id" = fr."locationId"
+JOIN "User" u ON u."id" = fr."userId"
+WHERE m."lostReportId" = 'r1'
+  AND m."status" <> 'DISMISSED'
+ORDER BY m."score" DESC;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Sort  (cost=12.83..12.84 rows=1 width=136) (actual time=0.045..0.046 rows=1 loops=1)
+  Sort Key: m.score DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=11
+  ->  Nested Loop  (cost=0.42..12.82 rows=1 width=136) (actual time=0.018..0.029 rows=1 loops=1)
+        Buffers: shared hit=8
+        ->  Nested Loop  (cost=0.28..12.64 rows=1 width=132) (actual time=0.014..0.025 rows=1 loops=1)
+              Buffers: shared hit=6
+              ->  Nested Loop  (cost=0.15..12.45 rows=1 width=128) (actual time=0.011..0.022 rows=1 loops=1)
+                    Buffers: shared hit=4
+                    ->  Seq Scan on "Match" m  (cost=0.00..4.25 rows=1 width=28) (actual time=0.006..0.016 rows=1 loops=1)
+                          Filter: ((status <> 'DISMISSED'::"MatchStatus") AND ("lostReportId" = 'r1'::text))
+                          Rows Removed by Filter: 149
+                          Buffers: shared hit=2
+                    ->  Index Scan using "ItemReport_pkey" on "ItemReport" fr  (cost=0.15..8.17 rows=1 width=104) (actual time=0.002..0.002 rows=1 loops=1)
+                          Index Cond: (id = m."foundReportId")
+                          Buffers: shared hit=2
+              ->  Index Scan using "Location_pkey" on "Location" l  (cost=0.14..0.18 rows=1 width=10) (actual time=0.002..0.002 rows=1 loops=1)
+                    Index Cond: (id = fr."locationId")
+                    Buffers: shared hit=2
+        ->  Index Scan using "User_pkey" on "User" u  (cost=0.14..0.18 rows=1 width=10) (actual time=0.004..0.004 rows=1 loops=1)
+              Index Cond: (id = fr."userId")
+              Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=469
+Planning Time: 0.790 ms
+Execution Time: 0.104 ms

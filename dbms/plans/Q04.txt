@@ -1,0 +1,39 @@
+-- Q04: Fetch all item categories with count of active lost and found reports
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    c."id",
+    c."name",
+    COUNT(ir."id") FILTER (WHERE ir."type" = 'LOST' AND ir."status" = 'ACTIVE') AS "activeLostCount",
+    COUNT(ir."id") FILTER (WHERE ir."type" = 'FOUND' AND ir."status" = 'ACTIVE') AS "activeFoundCount"
+FROM "Category" c
+LEFT JOIN "ItemReport" ir ON ir."categoryId" = c."id"
+GROUP BY c."id", c."name"
+ORDER BY c."name" ASC;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Sort  (cost=26.27..26.30 rows=12 width=25) (actual time=0.212..0.214 rows=12 loops=1)
+  Sort Key: c.name
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=15
+  ->  HashAggregate  (cost=25.94..26.06 rows=12 width=25) (actual time=0.192..0.194 rows=12 loops=1)
+        Group Key: c.id
+        Batches: 1  Memory Usage: 24kB
+        Buffers: shared hit=12
+        ->  Hash Right Join  (cost=1.27..18.24 rows=440 width=21) (actual time=0.026..0.138 rows=400 loops=1)
+              Hash Cond: (ir."categoryId" = c.id)
+              Buffers: shared hit=12
+              ->  Seq Scan on "ItemReport" ir  (cost=0.00..15.40 rows=440 width=15) (actual time=0.003..0.042 rows=400 loops=1)
+                    Buffers: shared hit=11
+              ->  Hash  (cost=1.12..1.12 rows=12 width=9) (actual time=0.012..0.013 rows=12 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on "Category" c  (cost=0.00..1.12 rows=12 width=9) (actual time=0.003..0.004 rows=12 loops=1)
+                          Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=256
+Planning Time: 0.512 ms
+Execution Time: 0.263 ms

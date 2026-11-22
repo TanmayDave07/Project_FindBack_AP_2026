@@ -1,0 +1,25 @@
+-- Q20: Submit claimant's answer hash and update verification result
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+UPDATE "Verification"
+SET "submittedAnswerHash" = '$2b$10$submittedanswerhash',
+    "verifiedById" = 'u1',
+    "status" = 'VERIFIED',
+    "verifiedAt" = CURRENT_TIMESTAMP
+WHERE "id" = 'v1'
+RETURNING "id", "claimId", "status", "verifiedAt";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Update on "Verification"  (cost=0.00..2.01 rows=1 width=82) (actual time=0.081..0.085 rows=1 loops=1)
+  Buffers: shared hit=9
+  ->  Seq Scan on "Verification"  (cost=0.00..2.01 rows=1 width=82) (actual time=0.026..0.029 rows=1 loops=1)
+        Filter: (id = 'v1'::text)
+        Rows Removed by Filter: 79
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=79
+Planning Time: 0.213 ms
+Execution Time: 0.130 ms

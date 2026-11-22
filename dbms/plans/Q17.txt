@@ -1,0 +1,60 @@
+-- Q17: List all claims submitted on a specific FOUND item report (for finder/admin review)
+-- Type: READ
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT
+    cl."id" AS "claimId",
+    cl."message",
+    cl."status" AS "claimStatus",
+    cl."createdAt",
+    u."id" AS "claimantId",
+    u."name" AS "claimantName",
+    u."email" AS "claimantEmail",
+    m."score" AS "matchScore",
+    v."status" AS "verificationStatus"
+FROM "Claim" cl
+JOIN "User" u ON u."id" = cl."userId"
+LEFT JOIN "Match" m ON m."id" = cl."matchId"
+LEFT JOIN "Verification" v ON v."claimId" = cl."id"
+WHERE cl."foundReportId" = 'r2'
+ORDER BY cl."createdAt" ASC;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Sort  (cost=9.56..9.57 rows=1 width=68) (actual time=0.090..0.093 rows=1 loops=1)
+  Sort Key: cl."createdAt"
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=8
+  ->  Hash Right Join  (cost=5.48..9.55 rows=1 width=68) (actual time=0.059..0.078 rows=1 loops=1)
+        Hash Cond: (m.id = cl."matchId")
+        Buffers: shared hit=5
+        ->  Seq Scan on "Match" m  (cost=0.00..3.50 rows=150 width=12) (actual time=0.002..0.009 rows=150 loops=1)
+              Buffers: shared hit=2
+        ->  Hash  (cost=5.47..5.47 rows=1 width=63) (actual time=0.050..0.052 rows=1 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 9kB
+              Buffers: shared hit=3
+              ->  Hash Join  (cost=4.05..5.47 rows=1 width=63) (actual time=0.045..0.050 rows=1 loops=1)
+                    Hash Cond: (u.id = cl."userId")
+                    Buffers: shared hit=3
+                    ->  Seq Scan on "User" u  (cost=0.00..1.30 rows=30 width=24) (actual time=0.003..0.004 rows=30 loops=1)
+                          Buffers: shared hit=1
+                    ->  Hash  (cost=4.03..4.03 rows=1 width=42) (actual time=0.032..0.033 rows=1 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                          Buffers: shared hit=2
+                          ->  Hash Right Join  (cost=2.01..4.03 rows=1 width=42) (actual time=0.022..0.032 rows=1 loops=1)
+                                Hash Cond: (v."claimId" = cl.id)
+                                Buffers: shared hit=2
+                                ->  Seq Scan on "Verification" v  (cost=0.00..1.80 rows=80 width=8) (actual time=0.002..0.005 rows=80 loops=1)
+                                      Buffers: shared hit=1
+                                ->  Hash  (cost=2.00..2.00 rows=1 width=38) (actual time=0.012..0.012 rows=1 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                      Buffers: shared hit=1
+                                      ->  Seq Scan on "Claim" cl  (cost=0.00..2.00 rows=1 width=38) (actual time=0.004..0.007 rows=1 loops=1)
+                                            Filter: ("foundReportId" = 'r2'::text)
+                                            Rows Removed by Filter: 79
+                                            Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=396
+Planning Time: 0.705 ms
+Execution Time: 0.157 ms

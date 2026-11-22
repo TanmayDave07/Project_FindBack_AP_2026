@@ -1,0 +1,23 @@
+-- Q21: Approve or reject a claim after verification
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+UPDATE "Claim"
+SET "status" = 'APPROVED',
+    "updatedAt" = CURRENT_TIMESTAMP
+WHERE "id" = 'cl1'
+RETURNING "id", "userId", "foundReportId", "status";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Update on "Claim"  (cost=0.00..2.01 rows=1 width=18) (actual time=0.095..0.099 rows=1 loops=1)
+  Buffers: shared hit=20
+  ->  Seq Scan on "Claim"  (cost=0.00..2.01 rows=1 width=18) (actual time=0.016..0.019 rows=1 loops=1)
+        Filter: (id = 'cl1'::text)
+        Rows Removed by Filter: 79
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=100
+Planning Time: 0.234 ms
+Execution Time: 0.144 ms

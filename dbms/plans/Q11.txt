@@ -1,0 +1,22 @@
+-- Q11: Update report status (e.g., ACTIVE -> MATCHED -> RESOLVED or CLOSED)
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+UPDATE "ItemReport"
+SET "status" = 'MATCHED',
+    "updatedAt" = CURRENT_TIMESTAMP
+WHERE "id" = 'r1'
+RETURNING "id", "title", "status", "updatedAt";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Update on "ItemReport"  (cost=0.15..8.17 rows=1 width=18) (actual time=0.295..0.297 rows=1 loops=1)
+  Buffers: shared hit=34
+  ->  Index Scan using "ItemReport_pkey" on "ItemReport"  (cost=0.15..8.17 rows=1 width=18) (actual time=0.019..0.020 rows=1 loops=1)
+        Index Cond: (id = 'r1'::text)
+        Buffers: shared hit=4
+Planning:
+  Buffers: shared hit=150
+Planning Time: 0.264 ms
+Execution Time: 0.344 ms

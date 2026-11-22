@@ -1,0 +1,27 @@
+-- Q16: Submit an ownership claim on a FOUND item report
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+INSERT INTO "Claim" ("userId", "foundReportId", "matchId", "message", "status")
+VALUES (
+    'u3',
+    'r2',
+    'm1',
+    'This is my charger; it has a small blue tape mark near the USB-C tip.',
+    'PENDING'
+)
+RETURNING *;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Insert on "Claim"  (cost=0.00..0.03 rows=1 width=180) (actual time=0.122..0.123 rows=1 loops=1)
+  Buffers: shared hit=68
+  ->  Result  (cost=0.00..0.03 rows=1 width=180) (actual time=0.017..0.018 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=22
+Planning Time: 0.071 ms
+Trigger for constraint Claim_userId_fkey: time=0.348 calls=1
+Trigger for constraint Claim_foundReportId_fkey: time=0.221 calls=1
+Trigger for constraint Claim_matchId_fkey: time=0.229 calls=1
+Execution Time: 0.953 ms

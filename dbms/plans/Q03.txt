@@ -1,0 +1,23 @@
+-- Q03: Mark a user's email as verified
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+UPDATE "User"
+SET "emailVerified" = true,
+    "updatedAt" = CURRENT_TIMESTAMP
+WHERE "id" = 'u10'
+RETURNING "id", "email", "emailVerified";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Update on "User"  (cost=0.00..1.38 rows=1 width=15) (actual time=0.086..0.088 rows=1 loops=1)
+  Buffers: shared hit=15
+  ->  Seq Scan on "User"  (cost=0.00..1.38 rows=1 width=15) (actual time=0.018..0.019 rows=1 loops=1)
+        Filter: (id = 'u10'::text)
+        Rows Removed by Filter: 29
+        Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=80
+Planning Time: 0.211 ms
+Execution Time: 0.134 ms

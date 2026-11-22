@@ -1,0 +1,36 @@
+-- Q06: Create a new LOST or FOUND item report
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+INSERT INTO "ItemReport" (
+    "userId", "categoryId", "locationId", "categoryDetails", "locationDetails",
+    "type", "title", "description", "color", "eventDate", "imageUrl"
+)
+VALUES (
+    'u10',
+    'c4',
+    'l9',
+    '65W USB-C MacBook Charger',
+    '2nd Floor, Table 4 near window',
+    'FOUND',
+    'White Apple USB-C Charger',
+    'Found a 65W white USB-C charger with a braided cable left plugged in.',
+    'White',
+    '2026-11-18 14:30:00',
+    'https://cdn.findback.app/items/charger-01.jpg'
+)
+RETURNING *;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Insert on "ItemReport"  (cost=0.00..0.03 rows=1 width=352) (actual time=0.181..0.182 rows=1 loops=1)
+  Buffers: shared hit=123
+  ->  Result  (cost=0.00..0.03 rows=1 width=352) (actual time=0.016..0.017 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=18
+Planning Time: 0.096 ms
+Trigger for constraint ItemReport_userId_fkey: time=0.391 calls=1
+Trigger for constraint ItemReport_categoryId_fkey: time=0.099 calls=1
+Trigger for constraint ItemReport_locationId_fkey: time=0.071 calls=1
+Execution Time: 0.766 ms

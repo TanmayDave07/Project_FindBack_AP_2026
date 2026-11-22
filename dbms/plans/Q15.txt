@@ -1,0 +1,23 @@
+-- Q15: Confirm or dismiss a proposed match
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+UPDATE "Match"
+SET "status" = 'CONFIRMED',
+    "updatedAt" = CURRENT_TIMESTAMP
+WHERE "id" = 'm1'
+RETURNING "id", "lostReportId", "foundReportId", "status";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Update on "Match"  (cost=0.00..3.88 rows=1 width=18) (actual time=0.174..0.181 rows=1 loops=1)
+  Buffers: shared hit=37
+  ->  Seq Scan on "Match"  (cost=0.00..3.88 rows=1 width=18) (actual time=0.020..0.026 rows=1 loops=1)
+        Filter: (id = 'm1'::text)
+        Rows Removed by Filter: 149
+        Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=115
+Planning Time: 0.269 ms
+Execution Time: 0.229 ms

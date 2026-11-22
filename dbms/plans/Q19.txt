@@ -1,0 +1,25 @@
+-- Q19: Create a security/ownership verification question for a claim
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+INSERT INTO "Verification" ("claimId", "question", "expectedAnswerHash", "status")
+VALUES (
+    'cl1',
+    'What sticker or mark is on the bottom of the adapter?',
+    '$2b$10$expectedanswerhash',
+    'PENDING'
+)
+RETURNING "id", "claimId", "question", "status", "createdAt";
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Insert on "Verification"  (cost=0.00..0.03 rows=1 width=212) (actual time=0.104..0.105 rows=1 loops=1)
+  Buffers: shared hit=46
+  ->  Result  (cost=0.00..0.03 rows=1 width=212) (actual time=0.018..0.018 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=19
+Planning Time: 0.068 ms
+Trigger for constraint Verification_claimId_fkey: time=0.418 calls=1
+Trigger for constraint Verification_verifiedById_fkey: time=0.034 calls=1
+Execution Time: 0.584 ms

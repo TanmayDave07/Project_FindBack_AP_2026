@@ -1,0 +1,26 @@
+-- Q22: Record final physical handover of a claimed item
+-- Type: WRITE
+-- Database: findback_db (PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)); data: 400 reports, 30 users, 150 matches, 80 claims
+-- Command: EXPLAIN (ANALYZE, BUFFERS) -- warm run; WRITE query run inside BEGIN ... ROLLBACK (no data changed)
+
+EXPLAIN (ANALYZE, BUFFERS)
+INSERT INTO "Handover" ("claimId", "handedOverById", "receivedById", "notes")
+VALUES (
+    'cl26',
+    'u23',
+    'u28',
+    'Handed over at Learners Arena reception after ID verification.'
+)
+RETURNING *;
+
+-- ---------------------------- QUERY PLAN ----------------------------
+Insert on "Handover"  (cost=0.00..0.03 rows=1 width=168) (actual time=0.121..0.122 rows=1 loops=1)
+  Buffers: shared hit=50
+  ->  Result  (cost=0.00..0.03 rows=1 width=168) (actual time=0.018..0.019 rows=1 loops=1)
+Planning:
+  Buffers: shared hit=22
+Planning Time: 0.129 ms
+Trigger for constraint Handover_claimId_fkey: time=0.386 calls=1
+Trigger for constraint Handover_handedOverById_fkey: time=0.128 calls=1
+Trigger for constraint Handover_receivedById_fkey: time=0.025 calls=1
+Execution Time: 0.731 ms
